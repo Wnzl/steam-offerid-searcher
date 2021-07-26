@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/sirupsen/logrus"
 	"steam-offerid-searcher/searcher"
 )
@@ -12,15 +13,32 @@ type result struct {
 }
 
 func main() {
+	apiKey := flag.String("key", "", "[Required] Provide api key to search trade offer")
+	message := flag.String("m", "", "[Required] Provide message to identify your trade offer")
+	failedID := flag.Int("id", 0, "[Required] offer id from search")
+	workers := flag.Int("w",  5, "Workers count")
+	flag.Parse()
+
+	if *apiKey == "" || *message == "" {
+		flag.Usage()
+		logrus.Fatalf("Please provide required flags\n")
+	}
+
 	offerRequests := []searcher.SearchOfferRequest{
 		{
-			Message:  "",
-			ApiKey:   "",
-			FailedId: 0,
+			Message:  *message,
+			ApiKey:   *apiKey,
+			FailedId: *failedID,
 		},
 	}
 
-	res := make([]result, len(offerRequests))
+	var (
+		found = make(chan searcher.Offer)
+
+		res = make([]result, len(offerRequests))
+	)
+
+
 	for i, req := range offerRequests {
 		logrus.WithField("message", req.Message).
 			WithField("startId", req.FailedId).
@@ -28,8 +46,7 @@ func main() {
 
 		s := searcher.NewSearcher(req.ApiKey, req.Message, 100, 2000)
 
-		//todo split to goroutines with separate proxy
-		offer, err := s.FindSuccessOffer(req)
+		offer, err := s.FindSuccessOffer(req, workers, )
 		if err != nil {
 			logrus.WithError(err).Error("searching success offer")
 			continue

@@ -29,7 +29,7 @@ func NewSearcher(apiKey string, message string, step int, limit int) *Searcher {
 	}
 }
 
-func (s *Searcher) FindSuccessOffer(p SearchOfferRequest) (Offer, error) {
+func (s *Searcher) FindSuccessOffer(in ,  found chan Offer) (Offer, error) {
 	asc := s.newSearcher(true)
 	desc := s.newSearcher(false)
 	limit := s.stepSize
